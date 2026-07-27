@@ -1,13 +1,6 @@
 # Import the QueryBase class
 from .query_base import QueryBase
-
-# Import dependencies for sql execution
-import sqlite3
 import pandas as pd
-from pathlib import Path
-
-# Dynamically calculate the absolute path to the database file in this package
-DB_PATH = Path(__file__).resolve().parent / "employee_events.db"
 
 # Create a subclass of QueryBase
 # called  `Team`
@@ -36,11 +29,9 @@ class Team(QueryBase):
         ORDER BY team_name;
         """
         
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            return [(str(row[0]), str(row[1])) for row in rows]
+        # Call the inherited self.query() method from QueryMixin
+        rows = self.query(query)
+        return [(str(row[0]), str(row[1])) for row in rows]
 
     # Define a `username` method
     # that receives an ID argument
@@ -57,13 +48,11 @@ class Team(QueryBase):
         query = f"""
         SELECT team_name
         FROM {self.name}
-        WHERE {self.name}_id = ?;
+        WHERE {self.name}_id = {id};
         """
         
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (id,))
-            return cursor.fetchall()
+        # Call the inherited self.query() method from QueryMixin
+        return self.query(query)
 
     # Below is method with an SQL query
     # This SQL query generates the data needed for
@@ -82,11 +71,10 @@ class Team(QueryBase):
                     FROM {self.name}
                     JOIN employee_events
                         USING({self.name}_id)
-                    WHERE {self.name}.{self.name}_id = {id}
+                    WHERE {self.name}s.{self.name}_id = {id}
                     GROUP BY employee_id
                    )
                 """
         
-        with sqlite3.connect(DB_PATH) as conn:
-            df = pd.read_sql_query(query, conn)
-        return df
+        # Call the inherited self.pandas_query() method from QueryMixin
+        return self.pandas_query(query)

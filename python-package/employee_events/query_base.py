@@ -1,15 +1,11 @@
 # Import any dependencies needed to execute sql queries
-import sqlite3
-from pathlib import Path
+from .sql_execution import QueryMixin
 import pandas as pd
-
-# Dynamically calculate the absolute path to the database file in this package
-DB_PATH = Path(__file__).resolve().parent / "employee_events.db"
 
 # Define a class called QueryBase
 # Use inheritance to add methods
 # for querying the employee_events database.
-class QueryBase:
+class QueryBase(QueryMixin):
 
     # Create a class attribute called `name`
     # set the attribute to an empty string
@@ -41,15 +37,13 @@ class QueryBase:
             SUM(ev.negative_events) AS negative_count
         FROM employee_events ev
         JOIN {self.name} t ON ev.{self.name}_id = t.{self.name}_id
-        WHERE t.{self.name}_id = ?
+        WHERE t.{self.name}_id = {id}
         GROUP BY ev.event_date
         ORDER BY ev.event_date;
         """
         
-        # Connect to the database and return the data as a dataframe
-        with sqlite3.connect(DB_PATH) as conn:
-            df = pd.read_sql_query(query, conn, params=(id,))
-        return df
+        # Use the inherited pandas_query method from QueryMixin to avoid redundancy
+        return self.pandas_query(query)
 
     # Define a `notes` method that receives an id argument
     # This function should return a pandas dataframe
@@ -68,11 +62,9 @@ class QueryBase:
             n.note
         FROM notes n
         JOIN {self.name} t ON n.{self.name}_id = t.{self.name}_id
-        WHERE t.{self.name}_id = ?
+        WHERE t.{self.name}_id = {id}
         ORDER BY n.note_date;
         """
         
-        # Connect to the database and return the data as a dataframe
-        with sqlite3.connect(DB_PATH) as conn:
-            df = pd.read_sql_query(query, conn, params=(id,))
-        return df
+        # Use the inherited pandas_query method from QueryMixin to avoid redundancy
+        return self.pandas_query(query)
