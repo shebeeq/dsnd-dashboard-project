@@ -6,6 +6,7 @@ import pandas as pd
 # Using pathlib, create a `db_path` variable
 # that points to the absolute path for the `employee_events.db` file
 #### YOUR CODE HERE
+db_path = Path(__file__).parent / "employee_events.db"
 
 
 # OPTION 1: MIXIN
@@ -17,6 +18,10 @@ class QueryMixin:
     # and returns the query's result
     # as a pandas dataframe
     #### YOUR CODE HERE
+    def pandas_query(self, query_string: str) -> pd.DataFrame:
+        with connect(db_path) as connection:
+            df = pd.read_sql_query(query_string, connection)
+        return df
 
     # Define a method named `query`
     # that receives an sql_query as a string
@@ -24,6 +29,12 @@ class QueryMixin:
     # a list of tuples. (You will need
     # to use an sqlite3 cursor)
     #### YOUR CODE HERE
+    def query(self, sql_query: str) -> list:
+        with connect(db_path) as connection:
+            cursor = connection.cursor()
+            cursor.execute(sql_query)
+            result = cursor.fetchall()
+        return result
     
 
  

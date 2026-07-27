@@ -1,23 +1,28 @@
 # Import the QueryBase class
 # YOUR CODE HERE
+from .query_base import QueryBase
 
 # Import dependencies for sql execution
 #### YOUR CODE HERE
+import sqlite3
+import pandas as pd
 
 # Create a subclass of QueryBase
 # called  `Team`
 #### YOUR CODE HERE
+class Team(QueryBase):
 
     # Set the class attribute `name`
     # to the string "team"
     #### YOUR CODE HERE
-
+    name = "team"
 
     # Define a `names` method
     # that receives no arguments
     # This method should return
     # a list of tuples from an sql execution
     #### YOUR CODE HERE
+    def names(self) -> list:
         
         # Query 5
         # Write an SQL query that selects
@@ -25,13 +30,25 @@
         # from the team table for all teams
         # in the database
         #### YOUR CODE HERE
-    
+        query = """
+        SELECT 
+            team_name,
+            team_id
+        FROM team
+        ORDER BY team_name;
+        """
+        
+        with sqlite3.connect("employee_events.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(query)
+            return cursor.fetchall()
 
     # Define a `username` method
     # that receives an ID argument
     # This method should return
     # a list of tuples from an sql execution
     #### YOUR CODE HERE
+    def username(self, id: int) -> list:
 
         # Query 6
         # Write an SQL query
@@ -40,7 +57,16 @@
         # to only return the team name related to
         # the ID argument
         #### YOUR CODE HERE
-
+        query = f"""
+        SELECT team_name
+        FROM {self.name}
+        WHERE {self.name}_id = ?;
+        """
+        
+        with sqlite3.connect("employee_events.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, (id,))
+            return cursor.fetchall()
 
     # Below is method with an SQL query
     # This SQL query generates the data needed for
@@ -52,7 +78,7 @@
     #### YOUR CODE HERE
     def model_data(self, id):
 
-        return f"""
+        query = f"""
             SELECT positive_events, negative_events FROM (
                     SELECT employee_id
                          , SUM(positive_events) positive_events
@@ -64,3 +90,7 @@
                     GROUP BY employee_id
                    )
                 """
+        
+        with sqlite3.connect("employee_events.db") as conn:
+            df = pd.read_sql_query(query, conn)
+        return df
