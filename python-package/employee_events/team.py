@@ -1,27 +1,26 @@
 # Import the QueryBase class
-# YOUR CODE HERE
 from .query_base import QueryBase
 
 # Import dependencies for sql execution
-#### YOUR CODE HERE
 import sqlite3
 import pandas as pd
+from pathlib import Path
+
+# Dynamically calculate the absolute path to the database file in this package
+DB_PATH = Path(__file__).resolve().parent / "employee_events.db"
 
 # Create a subclass of QueryBase
 # called  `Team`
-#### YOUR CODE HERE
 class Team(QueryBase):
 
     # Set the class attribute `name`
     # to the string "team"
-    #### YOUR CODE HERE
     name = "team"
 
     # Define a `names` method
     # that receives no arguments
     # This method should return
     # a list of tuples from an sql execution
-    #### YOUR CODE HERE
     def names(self) -> list:
         
         # Query 5
@@ -29,7 +28,6 @@ class Team(QueryBase):
         # the team_name and team_id columns
         # from the team table for all teams
         # in the database
-        #### YOUR CODE HERE
         query = """
         SELECT 
             team_name,
@@ -38,16 +36,16 @@ class Team(QueryBase):
         ORDER BY team_name;
         """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute(query)
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            return [(str(row[0]), str(row[1])) for row in rows]
 
     # Define a `username` method
     # that receives an ID argument
     # This method should return
     # a list of tuples from an sql execution
-    #### YOUR CODE HERE
     def username(self, id: int) -> list:
 
         # Query 6
@@ -56,14 +54,13 @@ class Team(QueryBase):
         # Use f-string formatting and a WHERE filter
         # to only return the team name related to
         # the ID argument
-        #### YOUR CODE HERE
         query = f"""
         SELECT team_name
         FROM {self.name}
         WHERE {self.name}_id = ?;
         """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute(query, (id,))
             return cursor.fetchall()
@@ -75,7 +72,6 @@ class Team(QueryBase):
     # so when it is called, a pandas dataframe
     # is returns containing the execution of
     # the sql query
-    #### YOUR CODE HERE
     def model_data(self, id):
 
         query = f"""
@@ -91,6 +87,6 @@ class Team(QueryBase):
                    )
                 """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             df = pd.read_sql_query(query, conn)
         return df

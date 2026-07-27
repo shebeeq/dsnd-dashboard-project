@@ -7,7 +7,11 @@ from .query_base import QueryBase
 #### YOUR CODE HERE
 import sqlite3
 import pandas as pd
+from pathlib import Path
 
+
+# Dynamically calculate the absolute path to the database file in this package
+DB_PATH = Path(__file__).resolve().parent / "employee_events.db"
 
 # Define a subclass of QueryBase
 # called Employee
@@ -42,10 +46,14 @@ class Employee(QueryBase):
         ORDER BY last_name, first_name;
         """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute(query)
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            # If the base class loop expects (text, value), swap the order here:
+            return [(str(row[0]), str(row[1])) for row in rows]
+        
+        
 
     # Define a method called `username`
     # that receives an `id` argument
@@ -67,7 +75,7 @@ class Employee(QueryBase):
         WHERE {self.name}_id = ?;
         """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute(query, (id,))
             return cursor.fetchall()
@@ -82,15 +90,21 @@ class Employee(QueryBase):
     #### YOUR CODE HERE
     def model_data(self, id):
 
+        # query = f"""
+        #             SELECT SUM(positive_events) positive_events
+        #                  , SUM(negative_events) negative_events
+        #             FROM {self.name}
+        #             JOIN employee_events
+        #                 USING({self.name}_id)
+        #             WHERE {self.name}.{self.name}_id = {id}
+        #         """
         query = f"""
-                    SELECT SUM(positive_events) positive_events
-                         , SUM(negative_events) negative_events
-                    FROM {self.name}
-                    JOIN employee_events
-                        USING({self.name}_id)
-                    WHERE {self.name}.{self.name}_id = {id}
-                """
+            SELECT SUM(positive_events) AS positive_events,
+                   SUM(negative_events) AS negative_events
+            FROM employee_events
+            WHERE employee_id = {id}
+        """
         
-        with sqlite3.connect("employee_events.db") as conn:
+        with sqlite3.connect(DB_PATH) as conn:
             df = pd.read_sql_query(query, conn)
         return df
